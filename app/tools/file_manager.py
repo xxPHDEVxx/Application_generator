@@ -2,6 +2,7 @@ import pdfplumber
 import os
 from loguru import logger as logging
 from dotenv import load_dotenv
+from tools.scraper import Scraper
 load_dotenv()
 
 
@@ -54,3 +55,15 @@ class CoverLetterManager:
             file.write(content)
 
         return full_path
+    
+class ApplicationManager:
+    def __init__(self, urls: list[str]):
+        self.urls = urls
+        self.scraper = Scraper()
+        self.applications = []
+
+    def run(self):
+        for url in self.urls:
+            documents = self.scraper.run(url)
+            self.applications.append(documents[0].page_content)
+        return self.applications
