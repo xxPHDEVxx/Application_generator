@@ -1,0 +1,43 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "generator of motivation document for my jobs applications"
+authors = [
+    {name = "Rayan Benaissa",email = "rayanbenaissa@gmail.com"}
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<4.0"
+langchain-groq = "0.3.6"
+langchain-core = "0.3.69"
+langchain-community = "0.3.27"
+python-dotenv = "1.0.1"
+langchain-openai = ">=0.3.0,<0.4.0"
+langchain-azure-ai = "^0.1.2"
+poetry = "^1.8.3"
+pydantic = "2.10.1"
+beautifulsoup4 = "4.12.3"
+langchain = "0.3.26"
+langsmith = "0.4.8"
+markdownify = "0.14.1"
+markdown-it-py = "3.0.0"
+numpy = "2.3.1"
+pandas = "2.2.3"
+pdf2image = "1.17.0"
+pdfminer-six = "20250506"
+pydantic-settings = "2.6.1"
+pydantic-core = "2.27.1"
+regex = "2024.5.15"
+requests = "2.32.3"
+tokenizers = "0.21.2"
+transformers = "4.53.2"
+camelot-py = "1.0.0"
+pdfplumber = "0.11.7"
+
+
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
