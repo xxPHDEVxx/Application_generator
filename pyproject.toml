@@ -1,11 +1,10 @@
-[project]
+[tool.poetry]
 name = "app"
 version = "0.1.0"
 description = "generator of motivation document for my jobs applications"
-authors = [
-    {name = "Rayan Benaissa",email = "rayanbenaissa@gmail.com"}
-]
+authors = ["Rayan Benaissa <rayanbenaissa@gmail.com>"]
 readme = "README.md"
+packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
@@ -35,9 +34,7 @@ tokenizers = "0.21.2"
 transformers = "4.53.2"
 camelot-py = "1.0.0"
 pdfplumber = "0.11.7"
-
-
-
+git-filter-repo = "2.47.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
