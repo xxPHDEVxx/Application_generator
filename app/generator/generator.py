@@ -3,15 +3,16 @@ from utils.models import Models
 from tools.file_manager import PdfManager
 
 class Generator:
-    def __init__(self, application: str):
+    def __init__(self):
         self.model = Models.MISTRAL
         self.prompt = Prompt.GENERATE_MOTIVATION
-        self.application = application
         self.cv = PdfManager().run()
 
-    def run(self):
-        chain = self.prompt | self.model
-        return chain.invoke({
+    def run(self, applications):
+        chain = self.prompt | self.model.with_structured_output()
+        for application in applications:
+            letter = chain.invoke({
             "cv": self.cv,
-            "job_description": self.application
-    }).content
+            "job_description": application
+            }).content
+        
