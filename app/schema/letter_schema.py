@@ -26,6 +26,8 @@ class CoverLetterSchema(BaseModel):
             "- Avoid overly generic or robotic phrasing.\n"
             "- Include nuanced transitions and a natural human flow.\n"
             "- Ensure the tone is warm, sincere, and personal.\n\n"
+            
+            # Example
             "Use the following example as a stylistic and structural reference:\n\n"
             "Dear AMA European Consulting team,\n"
             "I am writing to express my interest in joining your company. What excites me most\n"
