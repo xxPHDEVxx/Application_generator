@@ -124,6 +124,7 @@ app/
 - **URL Handling**: Bug in URL handling causes infinite loop — needs correction to properly manage malformed or unexpected URLs
 - **Letter Quality**: Quality of generated cover letters requires enhancement for better relevance and coherence
 - **Style & Layout**: Improvement needed in the style and layout of cover letters to ensure professional and polished presentation
+- **Multi Threading**: Add Multi Threading system to handle each generation seperatly
 
 ## Contributing
 
