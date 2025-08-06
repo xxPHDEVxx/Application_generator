@@ -1,5 +1,7 @@
 from utils.prompts import Prompt
 from utils.models import Models
+from utils.text_processor import TextProcessor
+from utils.language_detector import LanguageDetector
 from tools.file_manager import *
 from schema.letter_schema import CoverLetterSchema
 
@@ -52,17 +54,36 @@ class Generator:
         # Store the resulting cover letters
         results = []
 
-        for application in applications:
-            # Generate a structured letter using the model
-            letter: CoverLetterSchema = chain.invoke({
-                "cv": self.cv,
-                "job_description": application
-            })
+        for i, application in enumerate(applications):
+            try:
+                # Detect the language of the job posting
+                language, confidence = LanguageDetector.detect_language(application)
+                language_name = LanguageDetector.get_language_name(language)
+                
+                print(f"📌 Job {i+1}/{len(applications)}: Detected language: {language_name} (confidence: {confidence:.2f})")
+                
+                # Prepare texts to fit within token limits
+                truncated_cv, truncated_job = TextProcessor.prepare_for_llm(
+                    self.cv, 
+                    application,
+                    max_total_chars=5000  # Approximately 1250 tokens, well under 6000 limit
+                )
+                
+                # Generate a structured letter using the model with language parameter
+                letter: CoverLetterSchema = chain.invoke({
+                    "cv": truncated_cv,
+                    "job_description": truncated_job,
+                    "language": language_name
+                })
 
-            # Save or handle the generated letter
-            letter_manager.manage(letter.title, letter.content)
+                # Save or handle the generated letter
+                letter_manager.manage(letter.title, letter.content)
 
-            # Store the result
-            results.append(letter)
+                # Store the result
+                results.append(letter)
+                print(f"✅ Cover letter generated in {language_name}")
+            except Exception as e:
+                print(f"❌ Error generating letter: {e}")
+                continue
 
         return results
