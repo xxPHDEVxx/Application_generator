@@ -12,6 +12,15 @@ This project is designed for local usage only, aimed at streamlining the applica
 - **Organized Storage**: Saves each letter to a destination folder with formatting and clean filenames
 - **Structured Output**: Outputs include a title and a formatted body for each cover letter
 
+## Modern Web Interface
+
+This application features a beautiful Streamlit web interface:
+
+-  **Web-based** - Runs in your browser
+-  **Smart preview** - See generated letters instantly
+-  **Responsive design** - Works on any screen size
+- 🌍 **Multilingual** - Auto-detects job language
+
 ## Installation & Setup
 
 ### 1. Clone the repository
@@ -46,6 +55,19 @@ MODEL=mistral-saba-24b
 
 # Your Groq API key
 GROQ_API_KEY=your_api_key_here
+```
+
+## 🚀 Running the Application
+
+```bash
+poetry run streamlit run app/streamlit_app.py
+```
+
+The app will automatically open in your browser at `http://localhost:8501`
+
+### Alternative: Run with custom port
+```bash
+poetry run streamlit run app/streamlit_app.py --server.port 8080
 ```
 
 ## Supported LLM Models (Preview Only)

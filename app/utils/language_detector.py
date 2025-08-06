@@ -41,8 +41,6 @@ class LanguageDetector:
         'french': ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'ù', 'û', 'ô', 'î', 'ï', 'œ'],
         'dutch': ['ĳ', 'ë', 'ï'],
         'spanish': ['ñ', 'á', 'é', 'í', 'ó', 'ú', '¿', '¡'],
-        'german': ['ä', 'ö', 'ü', 'ß'],
-        'italian': ['à', 'è', 'é', 'ì', 'ò', 'ù']
     }
     
     @staticmethod
@@ -131,8 +129,6 @@ class LanguageDetector:
             'french': 'Français',
             'dutch': 'Nederlands',
             'spanish': 'Español',
-            'german': 'Deutsch',
-            'italian': 'Italiano'
         }
         return language_names.get(language_code, 'English')
     
@@ -152,8 +148,6 @@ class LanguageDetector:
             'french': 'Madame, Monsieur,',
             'dutch': 'Geachte heer/mevrouw,',
             'spanish': 'Estimado/a responsable de contratación,',
-            'german': 'Sehr geehrte Damen und Herren,',
-            'italian': 'Gentile responsabile delle assunzioni,'
         }
         return salutations.get(language, 'Dear Hiring Manager,')
     
@@ -173,7 +167,5 @@ class LanguageDetector:
             'french': 'Cordialement,',
             'dutch': 'Met vriendelijke groet,',
             'spanish': 'Atentamente,',
-            'german': 'Mit freundlichen Grüßen,',
-            'italian': 'Cordiali saluti,'
         }
         return closings.get(language, 'Sincerely,')

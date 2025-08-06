@@ -22,7 +22,7 @@ class Generator:
             urls (list[str]): List of job offer URLs to process.
         """
         # Language model configured to return structured output following CoverLetterSchema
-        self.model = Models.MISTRAL.with_structured_output(CoverLetterSchema)
+        self.model = Models.get_model().with_structured_output(CoverLetterSchema)
 
         # Prompt template guiding the letter generation
         self.prompt = Prompt.GENERATE_MOTIVATION
