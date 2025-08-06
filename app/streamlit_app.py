@@ -1,5 +1,5 @@
 """
-Modern Streamlit UI for AI Cover Letter Generator
+Modern Streamlit UI for AI Cover Letter Generator with Enhanced Features
 """
 
 import streamlit as st
@@ -8,13 +8,18 @@ import sys
 import subprocess
 import platform
 from pathlib import Path
-import time
+import pdfplumber
+import warnings
 
 # Add app directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from generator.generator import Generator
-from config import CV_PATH, DESTINATION_PATH, MODEL
+from config import GROQ_API_KEY, AVAILABLE_MODELS, validate_api_key
+
+# Suppress PDF warnings
+warnings.filterwarnings('ignore', message='.*FontBBox.*')
+warnings.filterwarnings('ignore', message='.*Could get FontBBox.*')
 
 # Page configuration
 st.set_page_config(
@@ -77,7 +82,39 @@ def open_folder(path):
         st.error(f"Could not open folder: {e}")
         return False
 
+def extract_pdf_text(uploaded_file):
+    """Extract text from uploaded PDF file."""
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pdfplumber.open(uploaded_file) as pdf:
+                text = ""
+                for page in pdf.pages:
+                    page_text = page.extract_text(x_tolerance=1.5, y_tolerance=2)
+                    if page_text:
+                        text += page_text + '\n'
+                return text
+    except Exception as e:
+        st.error(f"Error reading PDF: {e}")
+        return None
+
 def main():
+    # Initialize session state
+    if 'cv_content' not in st.session_state:
+        st.session_state.cv_content = None
+    if 'cv_filename' not in st.session_state:
+        st.session_state.cv_filename = None
+    if 'destination_path' not in st.session_state:
+        st.session_state.destination_path = str(Path.home() / "Documents" / "CoverLetters")
+    if 'selected_model' not in st.session_state:
+        st.session_state.selected_model = AVAILABLE_MODELS[0]
+        
+    # Check API key
+    if not validate_api_key():
+        st.error("⚠️ GROQ_API_KEY not found in environment variables. Please set it up before using the app.")
+        st.info("Set GROQ_API_KEY in your .env file or environment variables.")
+        st.stop()
+    
     # Header
     st.markdown("""
     <div class="main-header">
@@ -90,22 +127,70 @@ def main():
     with st.sidebar:
         st.header("⚙️ Configuration")
         
-        # Display current settings
-        st.markdown("### Current Settings")
+        # CV Upload
+        st.markdown("### 📄 CV Upload")
+        uploaded_file = st.file_uploader(
+            "Choose your CV (PDF)",
+            type=['pdf'],
+            key="cv_uploader",
+            help="Upload your CV in PDF format"
+        )
         
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            st.write("📄")
-            st.write("📁")
-            st.write("🤖")
-        with col2:
-            st.write("**CV:**")
-            st.write("**Output:**")
-            st.write("**Model:**")
+        if uploaded_file is not None:
+            # Extract text from PDF
+            cv_text = extract_pdf_text(uploaded_file)
+            if cv_text:
+                st.session_state.cv_content = cv_text
+                st.session_state.cv_filename = uploaded_file.name
+                st.success(f"✅ CV loaded: {uploaded_file.name}")
+                with st.expander("Preview CV (first 500 chars)"):
+                    st.text(cv_text[:500] + "..." if len(cv_text) > 500 else cv_text)
+        elif st.session_state.cv_filename:
+            st.info(f"Using: {st.session_state.cv_filename}")
         
-        st.code(f"CV: {Path(CV_PATH).name if CV_PATH else 'Not set'}", language=None)
-        st.code(f"Output: {Path(DESTINATION_PATH).name if DESTINATION_PATH else 'Not set'}", language=None)
-        st.code(f"Model: {MODEL}", language=None)
+        st.markdown("---")
+        
+        # Destination Folder
+        st.markdown("### 📁 Output Folder")
+        destination = st.text_input(
+            "Destination path",
+            value=st.session_state.destination_path,
+            key="destination_input",
+            help="Enter the full path where cover letters will be saved"
+        )
+        
+        # Validate and create directory
+        if destination:
+            try:
+                Path(destination).mkdir(parents=True, exist_ok=True)
+                st.session_state.destination_path = destination
+                if st.button("📂 Open Folder", key="open_dest"):
+                    open_folder(destination)
+            except Exception as e:
+                st.error(f"Invalid path: {e}")
+        
+        st.markdown("---")
+        
+        # Model Selection
+        st.markdown("### 🤖 Model Selection")
+        selected_model = st.selectbox(
+            "Choose AI Model",
+            options=AVAILABLE_MODELS,
+            index=AVAILABLE_MODELS.index(st.session_state.selected_model),
+            key="model_selector",
+            help="Select the Groq model to use for generation"
+        )
+        st.session_state.selected_model = selected_model
+        
+        # Model descriptions
+        model_info = {
+            "llama-3.3-70b-versatile": "Best overall performance",
+            "llama-3.1-8b-instant": "Fast and efficient",
+            "gemma2-9b-it": "Good for instructions",
+            "mixtral-8x7b-32768": "Large context window"
+        }
+        if selected_model in model_info:
+            st.caption(model_info[selected_model])
         
         st.markdown("---")
         
@@ -123,14 +208,16 @@ def main():
         
         st.markdown("---")
         
-        # Quick actions
-        st.markdown("### 🎯 Quick Actions")
-        if st.button("📂 Open Output Folder", use_container_width=True):
-            if DESTINATION_PATH and Path(DESTINATION_PATH).exists():
-                if open_folder(DESTINATION_PATH):
-                    st.success("Folder opened!")
-            else:
-                st.error("Output folder not found")
+        # Status Summary
+        st.markdown("### 📊 Status")
+        status_items = [
+            ("CV", "✅" if st.session_state.cv_content else "❌"),
+            ("Output", "✅" if st.session_state.destination_path else "❌"),
+            ("Model", "✅"),
+            ("API Key", "✅" if GROQ_API_KEY else "❌")
+        ]
+        for item, status in status_items:
+            st.write(f"{item}: {status}")
     
     # Main content area
     col1, col2 = st.columns([2, 1])
@@ -189,15 +276,24 @@ def main():
         # Language detection preview
         if valid_urls:
             st.markdown("### 🌍 Expected Languages")
-            languages = ["🇬🇧 English", "🇫🇷 French", "🇳🇱 Dutch", "🇩🇪 German", "🇪🇸 Spanish", "🇮🇹 Italian"]
             st.info("Language will be auto-detected from each job posting")
     
     # Generate button
     st.markdown("---")
     
-    if st.button("Generate Cover Letters", type="primary", use_container_width=True, disabled=not valid_urls):
+    # Check if ready to generate
+    can_generate = valid_urls and st.session_state.cv_content and st.session_state.destination_path
+    
+    if not st.session_state.cv_content:
+        st.warning("⚠️ Please upload your CV in the sidebar before generating cover letters.")
+    
+    if st.button("Generate Cover Letters", type="primary", use_container_width=True, disabled=not can_generate):
         if not valid_urls:
             st.error("Please enter at least one URL")
+            return
+        
+        if not st.session_state.cv_content:
+            st.error("Please upload your CV first")
             return
         
         # Create progress container
@@ -214,9 +310,14 @@ def main():
             results_container = st.container()
             
             try:
-                # Initialize generator
+                # Initialize generator with user-provided parameters
                 status_text.text("Initializing generator...")
-                generator = Generator(valid_urls)
+                generator = Generator(
+                    urls=valid_urls,
+                    cv_content=st.session_state.cv_content,
+                    destination_path=st.session_state.destination_path,
+                    model_name=st.session_state.selected_model
+                )
                 
                 # Simulate progress (in real app, update based on actual progress)
                 status_text.text("Fetching job descriptions...")
@@ -249,10 +350,10 @@ def main():
                         # Success message with folder button
                         col1, col2 = st.columns([3, 1])
                         with col1:
-                            st.info(f"📁 Files saved to: {DESTINATION_PATH}")
+                            st.info(f"📁 Files saved to: {st.session_state.destination_path}")
                         with col2:
                             if st.button("📂 Open Folder", key="open_results"):
-                                open_folder(DESTINATION_PATH)
+                                open_folder(st.session_state.destination_path)
                 else:
                     st.warning("No cover letters were generated. Please check the URLs.")
                     
@@ -266,7 +367,7 @@ def main():
         """
         <div style="text-align: center; color: #666; padding: 20px;">
             <p>Built using Streamlit | Powered by AI</p>
-            <p style="font-size: 0.9em;">Supports: 🇬🇧 English | 🇫🇷 Français | 🇳🇱 Nederlands | 🇪🇸 Españo</p>
+            <p style="font-size: 0.9em;">Supports: 🇬🇧 English | 🇫🇷 Français | 🇳🇱 Nederlands | 🇩🇪 Deutsch | 🇪🇸 Español | 🇮🇹 Italiano</p>
         </div>
         """,
         unsafe_allow_html=True

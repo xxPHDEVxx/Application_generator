@@ -2,8 +2,9 @@ from utils.prompts import Prompt
 from utils.models import Models
 from utils.text_processor import TextProcessor
 from utils.language_detector import LanguageDetector
-from tools.file_manager import *
+from tools.file_manager import CoverLetterManager, ApplicationManager
 from schema.letter_schema import CoverLetterSchema
+from pathlib import Path
 
 class Generator:
     """
@@ -14,24 +15,35 @@ class Generator:
     tailored letters and delegates saving to a file manager.
     """
 
-    def __init__(self, urls: list[str]):
+    def __init__(self, urls: list[str], cv_content: str = None, 
+                 destination_path: str = None, model_name: str = None):
         """
         Initializes the Generator with a list of job posting URLs.
 
         Args:
             urls (list[str]): List of job offer URLs to process.
+            cv_content (str, optional): CV content as text. If not provided, uses PdfManager.
+            destination_path (str, optional): Path to save cover letters.
+            model_name (str, optional): Name of the model to use.
         """
         # Language model configured to return structured output following CoverLetterSchema
-        self.model = Models.get_model().with_structured_output(CoverLetterSchema)
+        self.model = Models.get_model(model_name).with_structured_output(CoverLetterSchema)
 
         # Prompt template guiding the letter generation
         self.prompt = Prompt.GENERATE_MOTIVATION
 
-        # Extract CV content automatically from a PDF
-        self.cv = PdfManager().run()
+        # Use provided CV content or extract from PDF
+        if cv_content:
+            self.cv = cv_content
+        else:
+            from tools.file_manager import PdfManager
+            self.cv = PdfManager().run()
 
         # Store the list of URLs to process
         self.urls = urls
+        
+        # Store destination path if provided
+        self.destination_path = destination_path
 
     def run(self):
         """
@@ -45,7 +57,7 @@ class Generator:
         chain = self.prompt | self.model
 
         # Managers for saving letters and parsing job applications
-        letter_manager = CoverLetterManager()
+        letter_manager = CoverLetterManager(destination_path=self.destination_path)
         application_manager = ApplicationManager(self.urls)
 
         # Retrieve job descriptions from the provided URLs

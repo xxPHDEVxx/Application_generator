@@ -13,11 +13,16 @@ warnings.filterwarnings('ignore', message='.*Could get FontBBox.*')
 class PdfManager:
     """
     Extracts and returns the full text content from a PDF CV file.
-    The file path is read from the CV_PATH environment variable.
     """
 
-    def __init__(self):
-        self.file = CV_PATH
+    def __init__(self, file_path=None):
+        """
+        Initialize the PDF manager.
+        
+        Args:
+            file_path (str, optional): Path to the PDF file. Falls back to CV_PATH from config.
+        """
+        self.file = file_path or CV_PATH
 
     def run(self) -> str:
         """
@@ -43,11 +48,16 @@ class PdfManager:
 class CoverLetterManager:
     """
     Manages the saving of generated cover letters into professional PDF files.
-    The destination path is defined by the DESTINATION_PATH environment variable.
     """
 
-    def __init__(self):
-        self.path = DESTINATION_PATH
+    def __init__(self, destination_path=None):
+        """
+        Initialize the cover letter manager.
+        
+        Args:
+            destination_path (str, optional): Path to save PDFs. Falls back to DESTINATION_PATH from config.
+        """
+        self.path = destination_path or DESTINATION_PATH
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.pdf_generator = SimplePDFGenerator()
 
