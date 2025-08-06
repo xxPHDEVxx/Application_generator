@@ -1,5 +1,5 @@
 from langchain_groq import ChatGroq
-from config import GROQ_API_KEY, MODEL
+from config import get_api_key, MODEL
 
 class Models:
     """
@@ -16,12 +16,13 @@ class Models:
         
         # Check if we already have an instance for this model
         if model_to_use not in cls._instances:
-            if not GROQ_API_KEY:
-                raise ValueError("GROQ_API_KEY not set in environment variables")
+            api_key = get_api_key()
+            if not api_key:
+                raise ValueError("GROQ_API_KEY not set. Please set it in .env file or Streamlit secrets.")
             
             cls._instances[model_to_use] = ChatGroq(
                 model=model_to_use,
-                api_key=GROQ_API_KEY,
+                api_key=api_key,
                 temperature=0.7,
                 max_tokens=2000,
                 timeout=60,
