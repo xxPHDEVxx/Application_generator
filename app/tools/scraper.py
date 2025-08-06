@@ -1,6 +1,6 @@
+import random
+import requests
 from langchain.schema import Document
-from loguru import logger as logging
-import random, requests
 from langchain_community.document_loaders import WebBaseLoader
 
 # List of user agents to rotate requests and avoid detection
@@ -35,8 +35,6 @@ class Scraper:
         # Initialize the scraper with a document loader
         self.loader = loader
 
-    from urllib.parse import urlparse
-
     def is_accessible_url(self, url: str) -> bool:
         """Check if the URL responds with a valid HTTP status."""
         try:
@@ -44,9 +42,7 @@ class Scraper:
                 url, headers=get_random_header(), allow_redirects=True, timeout=10
             )
             return response.status_code in [200, 405, 403] # method 'head' can be not allowed and return code 405 or 403
-        except requests.RequestException as e:
-            # Capture et affiche l'exception
-            logging.error(f"Erreur lors de la requête HTTP pour l'URL {url} : {str(e)}")
+        except requests.RequestException:
             return False
 
     def is_valid_url(self, url: str) -> bool:
@@ -61,7 +57,6 @@ class Scraper:
         :return: A list of documents or an empty document if the URL is invalid.
         """
         if not self.is_valid_url(url):
-            logging.warning("invalid url: " + url)
             return [Document("")]
 
         # Use the document loader with the given URL and headers
@@ -71,5 +66,4 @@ class Scraper:
 
     def run(self, url: str) -> list[Document]:
         """Execute the scraper on a given URL and return its content."""
-        # logging.info(f"Loading URL: {url}")  # Debugging output
         return self.load_web_content(url)

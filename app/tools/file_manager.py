@@ -1,11 +1,13 @@
+import warnings
+from pathlib import Path
 import pdfplumber
-import os
-import textwrap
-from dotenv import load_dotenv
+from config import CV_PATH, DESTINATION_PATH
 from tools.scraper import Scraper
+from utils.simple_pdf_generator import SimplePDFGenerator
 
-# Load environment variables from .env file
-load_dotenv()
+# Suppress FontBBox warnings
+warnings.filterwarnings('ignore', message='.*FontBBox.*')
+warnings.filterwarnings('ignore', message='.*Could get FontBBox.*')
 
 
 class PdfManager:
@@ -15,7 +17,7 @@ class PdfManager:
     """
 
     def __init__(self):
-        self.file = os.getenv("CV_PATH")
+        self.file = CV_PATH
 
     def run(self) -> str:
         """
@@ -27,70 +29,48 @@ class PdfManager:
         content = ""
 
         # Open the PDF file using pdfplumber
-        with pdfplumber.open(self.file) as file:
-            for page in file.pages:
-                # Extract text with adjusted tolerance for better layout preservation
-                txt = page.extract_text(x_tolerance=1.5, y_tolerance=2)
-                if txt:
-                    content += txt + '\n'
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pdfplumber.open(self.file) as file:
+                for page in file.pages:
+                    # Extract text with adjusted tolerance for better layout preservation
+                    txt = page.extract_text(x_tolerance=1.5, y_tolerance=2)
+                    if txt:
+                        content += txt + '\n'
         return content
 
 
 class CoverLetterManager:
     """
-    Manages the saving of generated cover letters into formatted text files.
+    Manages the saving of generated cover letters into professional PDF files.
     The destination path is defined by the DESTINATION_PATH environment variable.
     """
 
     def __init__(self):
-        self.path = os.getenv("DESTINATION_PATH")
-        if not self.path:
-            raise ValueError("The DESTINATION_PATH environment variable is not set.")
-        if not os.path.exists(self.path):
-            os.makedirs(self.path, exist_ok=True)
+        self.path = DESTINATION_PATH
+        Path(self.path).mkdir(parents=True, exist_ok=True)
+        self.pdf_generator = SimplePDFGenerator()
 
     def manage(self, title: str, content: str) -> str:
         """
-        Saves the given letter content to a .txt file using a cleaned version of the title.
+        Saves the given letter content to a professional PDF file.
 
         Args:
-            title (str): The title of the letter (used as filename and heading).
+            title (str): The title of the letter (used as filename and document title).
             content (str): The content/body of the letter.
 
         Returns:
-            str: The full path to the saved file.
+            str: The full path to the saved PDF file.
         """
         # Sanitize title for safe file naming
         safe_title = "".join(c for c in title if c.isalnum() or c in (" ", "_", "-")).rstrip()
-        filename = f"{safe_title}.txt"
-        full_path = os.path.join(self.path, filename)
-
-        # Prepare formatted content
-        formatted_lines = []
-        line_width = 80  # Ideal width for reading in editors or terminal
-
-        # Centered title and underline
-        centered_title = title.center(line_width)
-        underline = "-" * len(title)
-        centered_underline = underline.center(line_width)
-
-        formatted_lines.append(centered_title)
-        formatted_lines.append(centered_underline)
-        formatted_lines.append("")  # Blank line
-
-        # Split and wrap each paragraph
-        paragraphs = content.split("\n")
-        for paragraph in paragraphs:
-            if paragraph.strip():
-                wrapped = textwrap.fill(paragraph.strip(), width=line_width)
-                formatted_lines.append(wrapped)
-                formatted_lines.append("")  # Blank line between paragraphs
-
-        # Write to file
-        with open(full_path, "w", encoding="utf-8") as file:
-            file.write("\n".join(formatted_lines))
-
-        return full_path
+        filename = f"{safe_title}"
+        full_path = Path(self.path) / filename
+        
+        # Generate PDF
+        pdf_path = self.pdf_generator.generate_pdf(title, content, full_path)
+        print(f"✅ Cover letter saved as: {pdf_path}")
+        return str(pdf_path)
 
 
 class ApplicationManager:
