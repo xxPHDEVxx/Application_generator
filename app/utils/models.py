@@ -1,9 +1,17 @@
-import os
-from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-
-load_dotenv()
+from config import GROQ_API_KEY, MODEL
 
 class Models:
-    MISTRAL = ChatGroq(model=os.getenv("MODEL"))
-        
+    """
+    Manages LLM model instances and configurations.
+    """
+    
+    # Create the model instance
+    MISTRAL = ChatGroq(
+        model=MODEL,
+        api_key=GROQ_API_KEY,
+        temperature=0.7,
+        max_tokens=2000,
+        timeout=60,
+        max_retries=2
+    )
