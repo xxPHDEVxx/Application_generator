@@ -15,7 +15,7 @@ import warnings
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from generator.generator import Generator
-from config import GROQ_API_KEY, AVAILABLE_MODELS, validate_api_key
+from config import get_api_key, AVAILABLE_MODELS, validate_api_key
 
 # Suppress PDF warnings
 warnings.filterwarnings('ignore', message='.*FontBBox.*')
@@ -214,7 +214,7 @@ def main():
             ("CV", "✅" if st.session_state.cv_content else "❌"),
             ("Output", "✅" if st.session_state.destination_path else "❌"),
             ("Model", "✅"),
-            ("API Key", "✅" if GROQ_API_KEY else "❌")
+            ("API Key", "✅" if get_api_key() else "❌")
         ]
         for item, status in status_items:
             st.write(f"{item}: {status}")

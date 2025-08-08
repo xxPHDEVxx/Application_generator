@@ -26,10 +26,12 @@ except ImportError:
 def get_api_key():
     """Get API key from environment or Streamlit secrets."""
     # Try Streamlit secrets first (for deployment)
-    if HAS_STREAMLIT and hasattr(st, 'secrets'):
+    if HAS_STREAMLIT:
         try:
-            return st.secrets.get("GROQ_API_KEY", "")
-        except:
+            # Check if we're in a Streamlit app context
+            if hasattr(st, 'secrets') and "GROQ_API_KEY" in st.secrets:
+                return st.secrets["GROQ_API_KEY"]
+        except Exception:
             pass
     
     # Fall back to environment variable
